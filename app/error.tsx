@@ -6,10 +6,10 @@ import { AlertTriangle } from 'lucide-react'
 
 export default function Error({
   error,
-  reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string }
-  reset: () => void
+  unstable_retry?: () => void
 }) {
   useEffect(() => {
     console.error(error)
@@ -28,7 +28,7 @@ export default function Error({
         <p className="mt-2 text-xs text-surface-700 font-mono">{error.digest}</p>
       )}
       <div className="mt-8 flex gap-3">
-        <Button onClick={reset}>Intentar de nuevo</Button>
+        {unstable_retry && <Button onClick={unstable_retry}>Intentar de nuevo</Button>}
         <Button variant="ghost" onClick={() => window.location.href = '/'}>
           Ir al inicio
         </Button>

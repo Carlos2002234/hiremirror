@@ -72,7 +72,7 @@ export default function RegisterPage() {
       password,
       options: {
         data: { role, full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/onboarding/${role}`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/onboarding/${role}`,
       },
     })
 

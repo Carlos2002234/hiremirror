@@ -33,7 +33,6 @@ function LoginForm() {
     }
 
     router.push(redirect)
-    router.refresh()
   }
 
   return (

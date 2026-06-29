@@ -4,6 +4,8 @@ import { JOB_ANALYZER_SYSTEM, buildJobAnalyzerUserMessage } from '@/lib/ai/promp
 import { NextResponse } from 'next/server'
 import type { Database } from '@/types/supabase'
 
+export const maxDuration = 120
+
 type AiProfile = Database['public']['Tables']['ai_profiles']['Row']
 
 const MODEL = 'claude-opus-4-8'

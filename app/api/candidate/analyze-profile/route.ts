@@ -4,6 +4,8 @@ import { PROFILER_SYSTEM, buildProfilerUserMessage } from '@/lib/ai/prompts/prof
 import { NextResponse } from 'next/server'
 import type { Database, Json } from '@/types/supabase'
 
+export const maxDuration = 120
+
 type AiProfileInsert = Database['public']['Tables']['ai_profiles']['Insert']
 type EvidenceSourceRow = Database['public']['Tables']['evidence_sources']['Row']
 
@@ -110,8 +112,9 @@ export async function POST() {
     const textBlock = message.content.find(b => b.type === 'text')
     rawText = textBlock && 'text' in textBlock ? textBlock.text : ''
   } catch (err) {
-    console.error('Claude API error:', err)
-    return NextResponse.json({ error: 'Error al llamar a la IA. Intenta de nuevo.' }, { status: 502 })
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('Claude API error:', msg)
+    return NextResponse.json({ error: 'Error al llamar a la IA. Intenta de nuevo.', detail: msg }, { status: 502 })
   }
 
   // Parse JSON response

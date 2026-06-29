@@ -50,6 +50,14 @@ export async function POST() {
     return NextResponse.json({ error: 'No se encontró CV. Sube tu CV primero.' }, { status: 400 })
   }
 
+  const isDocx = cvSource.url.endsWith('.docx') || cvSource.url.endsWith('.doc')
+  if (isDocx) {
+    return NextResponse.json(
+      { error: 'Tu CV está en formato DOCX. Elimínalo en "Mis fuentes" y sube un PDF.' },
+      { status: 400 },
+    )
+  }
+
   // Download CV from Supabase Storage
   const { data: blob, error: downloadError } = await supabase.storage
     .from('cv-uploads')
@@ -61,12 +69,6 @@ export async function POST() {
 
   const arrayBuffer = await blob.arrayBuffer()
   const base64 = Buffer.from(arrayBuffer).toString('base64')
-
-  // Detect media type from stored path
-  const isDocx = cvSource.url.endsWith('.docx') || cvSource.url.endsWith('.doc')
-  const mediaType = isDocx
-    ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    : 'application/pdf'
 
   // Call Claude with the CV as a document block
   const anthropic = getAnthropicClient()
@@ -94,7 +96,7 @@ export async function POST() {
               type: 'document',
               source: {
                 type: 'base64',
-                media_type: mediaType as 'application/pdf',
+                media_type: 'application/pdf',
                 data: base64,
               },
             },

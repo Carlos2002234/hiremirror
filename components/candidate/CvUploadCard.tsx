@@ -55,7 +55,7 @@ export function CvUploadCard({ source }: Props) {
             ? cvReady
               ? 'CV subido. La IA lo procesará cuando generes tu perfil.'
               : 'Error al procesar el CV anterior. Puedes subir uno nuevo.'
-            : 'Sube tu CV en PDF o DOCX. La IA extraerá habilidades y experiencia.'}
+            : 'Sube tu CV en PDF. La IA extraerá habilidades y experiencia.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -99,14 +99,14 @@ export function CvUploadCard({ source }: Props) {
                 ) : (
                   <p className="text-sm text-surface-400">
                     {hasCV ? 'Haz clic para reemplazar tu CV' : 'Haz clic para seleccionar tu CV'}
-                    <span className="ml-1 text-surface-600">· PDF o DOCX · máx 10 MB</span>
+                    <span className="ml-1 text-surface-600">· PDF · máx 10 MB</span>
                   </p>
                 )}
               </div>
               <input
                 ref={fileRef}
                 type="file"
-                accept=".pdf,.doc,.docx"
+                accept=".pdf"
                 className="hidden"
                 onChange={e => {
                   const f = e.target.files?.[0]

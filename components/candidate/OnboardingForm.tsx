@@ -364,13 +364,13 @@ export function OnboardingForm({ userId, initialName }: Props) {
                   ) : (
                     <div className="text-center">
                       <p className="text-sm text-surface-300">Haz clic para seleccionar tu CV</p>
-                      <p className="text-xs text-surface-500 mt-1">PDF o DOCX · máx. 10 MB</p>
+                      <p className="text-xs text-surface-500 mt-1">PDF · máx. 10 MB</p>
                     </div>
                   )}
                   <input
                     ref={fileRef}
                     type="file"
-                    accept=".pdf,.doc,.docx"
+                    accept=".pdf"
                     className="hidden"
                     onChange={e => {
                       const f = e.target.files?.[0]

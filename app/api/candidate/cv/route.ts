@@ -42,13 +42,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'El archivo supera el límite de 10 MB' }, { status: 413 })
   }
 
-  const allowedTypes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ]
-  if (!allowedTypes.includes(file.type)) {
-    return NextResponse.json({ error: 'Solo se aceptan PDF o DOCX' }, { status: 415 })
+  if (file.type !== 'application/pdf') {
+    return NextResponse.json({ error: 'Solo se aceptan archivos PDF' }, { status: 415 })
   }
 
   // Upload to Storage: {userId}/{timestamp}_{filename}

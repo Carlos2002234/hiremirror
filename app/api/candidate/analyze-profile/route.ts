@@ -36,15 +36,16 @@ export async function POST() {
 
   const candidateId = (profile as { id: string; full_name: string | null; headline: string | null; years_experience: number | null; primary_specialization: string | null }).id
 
-  // Get CV source path
-  const { data: cvSourceRaw } = await supabase
-    .from('evidence_sources')
-    .select('url')
-    .eq('candidate_id', candidateId)
-    .eq('source_type', 'cv')
-    .single()
+  // Fetch CV + extra sources in parallel
+  const [cvRes, ghRes, liRes] = await Promise.all([
+    supabase.from('evidence_sources').select('url').eq('candidate_id', candidateId).eq('source_type', 'cv').single(),
+    supabase.from('evidence_sources').select('id, processed_data').eq('candidate_id', candidateId).eq('source_type', 'github').single(),
+    supabase.from('evidence_sources').select('id, processed_data').eq('candidate_id', candidateId).eq('source_type', 'linkedin').single(),
+  ])
 
-  const cvSource = cvSourceRaw as Pick<EvidenceSourceRow, 'url'> | null
+  const cvSource = cvRes.data as Pick<EvidenceSourceRow, 'url'> | null
+  const githubData = (ghRes.data as { processed_data: Record<string, unknown> } | null)?.processed_data ?? null
+  const linkedinData = (liRes.data as { processed_data: { work_experience?: Record<string, unknown>[] } } | null)?.processed_data ?? null
 
   if (!cvSource?.url) {
     return NextResponse.json({ error: 'No se encontró CV. Sube tu CV primero.' }, { status: 400 })
@@ -107,6 +108,8 @@ export async function POST() {
                 headline: typedProfile.headline,
                 yearsOfExperience: typedProfile.years_experience,
                 specialization: typedProfile.primary_specialization,
+                github: githubData as Parameters<typeof buildProfilerUserMessage>[0]['github'],
+                workExperience: (linkedinData?.work_experience ?? null) as Parameters<typeof buildProfilerUserMessage>[0]['workExperience'],
               }),
             },
           ],

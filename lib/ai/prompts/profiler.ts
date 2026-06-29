@@ -28,18 +28,61 @@ Scoring rubric:
 
 Be honest and calibrated. Most candidates score 40-70 overall. Only exceptional profiles exceed 80.`
 
+interface GitHubData {
+  username: string
+  public_repos: number
+  security_repo_count: number
+  top_languages: string[]
+  followers: number
+  security_repos: Array<{ name: string; description: string; stars: number; topics: string[] }>
+}
+
+interface WorkEntry {
+  title: string
+  company: string
+  start_date: string
+  end_date: string | null
+  current: boolean
+  description: string
+}
+
 export function buildProfilerUserMessage(candidate: {
   fullName: string
   headline: string | null
   yearsOfExperience: number | null
   specialization: string | null
+  github?: GitHubData | null
+  workExperience?: WorkEntry[] | null
 }): string {
-  return `Analyze this cybersecurity candidate:
+  let msg = `Analyze this cybersecurity candidate:
 
 Name: ${candidate.fullName}
 Headline: ${candidate.headline ?? 'Not provided'}
 Years of experience: ${candidate.yearsOfExperience ?? 'Not provided'}
-Specialization: ${candidate.specialization ?? 'Not provided'}
+Specialization: ${candidate.specialization ?? 'Not provided'}`
 
-The candidate's full CV is attached as a PDF document. Please analyze it thoroughly and return the JSON evaluation.`
+  if (candidate.github) {
+    const gh = candidate.github
+    msg += `
+
+GitHub (github.com/${gh.username}):
+- Public repos: ${gh.public_repos} | Security-related repos: ${gh.security_repo_count}
+- Top languages: ${gh.top_languages.join(', ') || 'N/A'}
+- Followers: ${gh.followers}`
+    if (gh.security_repos.length > 0) {
+      msg += `\n- Notable security repos: ${gh.security_repos.slice(0, 5).map(r => r.name + (r.description ? ` (${r.description})` : '')).join('; ')}`
+    }
+  }
+
+  if (candidate.workExperience && candidate.workExperience.length > 0) {
+    msg += `\n\nWork Experience (from LinkedIn):`
+    for (const job of candidate.workExperience) {
+      const period = job.current ? `${job.start_date}–Present` : `${job.start_date}–${job.end_date ?? 'N/A'}`
+      msg += `\n- ${job.title} at ${job.company} (${period})${job.description ? ': ' + job.description : ''}`
+    }
+  }
+
+  msg += `\n\nThe candidate's full CV is attached as a PDF document. Please analyze it thoroughly and return the JSON evaluation.`
+
+  return msg
 }

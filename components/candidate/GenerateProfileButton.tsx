@@ -23,7 +23,7 @@ export function GenerateProfileButton({ hasCV }: GenerateProfileButtonProps) {
       const body = await res.json()
 
       if (!res.ok) {
-        setErrorMsg(body.error ?? 'Ocurrió un error inesperado')
+        setErrorMsg(body.detail ?? body.error ?? 'Ocurrió un error inesperado')
         setStatus('error')
         return
       }

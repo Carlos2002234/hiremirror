@@ -12,6 +12,10 @@ type EvidenceSourceRow = Database['public']['Tables']['evidence_sources']['Row']
 const MODEL = 'claude-opus-4-8'
 
 export async function POST() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: 'ANTHROPIC_API_KEY no configurada en el servidor', detail: 'Missing env var' }, { status: 500 })
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

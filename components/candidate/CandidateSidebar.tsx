@@ -1,6 +1,6 @@
 'use client'
 
-import { Shield, LayoutDashboard, Database, Search, FileText, TrendingUp, Target, LogOut } from 'lucide-react'
+import { Shield, LayoutDashboard, Database, Search, FileText, TrendingUp, Target, LogOut, Link2 } from 'lucide-react'
 import { NavLink } from '@/components/ui/NavLink'
 
 const NAV_ITEMS = [
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/roadmap', icon: Target, label: 'Mi roadmap' },
   { href: '/sources', icon: Database, label: 'Mis fuentes' },
   { href: '/analyze', icon: Search, label: 'Analizar vacante' },
+  { href: '/linkedin', icon: Link2, label: 'LinkedIn Optimizer' },
   { href: '/profile', icon: FileText, label: 'Mi perfil' },
 ]
 

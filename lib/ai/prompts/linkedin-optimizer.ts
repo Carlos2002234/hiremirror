@@ -48,6 +48,92 @@ Scoring rubric:
 
 Be specific and honest. Reference actual text from the profile in your issues. The improved sections should be ready to copy-paste. Write issues and recommendations in Spanish. Write improved headline and summary in the same language as the original profile.`
 
+interface ProxycurlExperience {
+  title?: string
+  company?: string
+  description?: string
+  starts_at?: { year?: number; month?: number }
+  ends_at?: { year?: number; month?: number } | null
+}
+
+interface ProxycurlEducation {
+  school?: string
+  degree_name?: string
+  field_of_study?: string
+  starts_at?: { year?: number }
+  ends_at?: { year?: number }
+}
+
+interface ProxycurlCertification {
+  name?: string
+  authority?: string
+}
+
+export function formatProxycurlProfile(data: Record<string, unknown>): string {
+  const lines: string[] = []
+
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
+  const num = (v: unknown) => (typeof v === 'number' ? v : null)
+
+  lines.push(`Name: ${str(data.full_name) || `${str(data.first_name)} ${str(data.last_name)}`.trim()}`)
+  if (data.headline) lines.push(`Headline: ${str(data.headline)}`)
+  if (data.occupation) lines.push(`Current role: ${str(data.occupation)}`)
+  if (data.city || data.country) lines.push(`Location: ${[str(data.city), str(data.country)].filter(Boolean).join(', ')}`)
+  if (num(data.connections)) lines.push(`Connections: ${data.connections}+`)
+  if (data.follower_count) lines.push(`Followers: ${data.follower_count}`)
+
+  if (data.summary) {
+    lines.push('\n--- ABOUT / SUMMARY ---')
+    lines.push(str(data.summary).slice(0, 2000))
+  }
+
+  const experiences = (data.experiences as ProxycurlExperience[] | null) ?? []
+  if (experiences.length) {
+    lines.push('\n--- EXPERIENCE ---')
+    for (const exp of experiences.slice(0, 10)) {
+      const start = exp.starts_at?.year ?? '?'
+      const end = exp.ends_at ? (exp.ends_at.year ?? '?') : 'Present'
+      lines.push(`- ${exp.title ?? 'Unknown role'} at ${exp.company ?? 'Unknown company'} (${start}–${end})`)
+      if (exp.description) lines.push(`  ${exp.description.slice(0, 400)}`)
+    }
+  }
+
+  const education = (data.education as ProxycurlEducation[] | null) ?? []
+  if (education.length) {
+    lines.push('\n--- EDUCATION ---')
+    for (const edu of education.slice(0, 5)) {
+      const year = edu.ends_at?.year ?? edu.starts_at?.year ?? ''
+      lines.push(`- ${edu.degree_name ?? ''} ${edu.field_of_study ? `in ${edu.field_of_study}` : ''} at ${edu.school ?? ''} ${year}`.trim())
+    }
+  }
+
+  const skills = (data.skills as string[] | null) ?? []
+  if (skills.length) {
+    lines.push('\n--- SKILLS ---')
+    lines.push(skills.slice(0, 50).join(', '))
+  }
+
+  const certs = (data.certifications as ProxycurlCertification[] | null) ?? []
+  if (certs.length) {
+    lines.push('\n--- CERTIFICATIONS ---')
+    for (const cert of certs.slice(0, 10)) {
+      lines.push(`- ${cert.name ?? ''}${cert.authority ? ` (${cert.authority})` : ''}`)
+    }
+  }
+
+  if (data.volunteer_work) {
+    const vw = data.volunteer_work as Array<{ role?: string; company?: { name?: string } }>
+    if (vw.length) {
+      lines.push('\n--- VOLUNTEER / COMMUNITY ---')
+      for (const v of vw.slice(0, 5)) {
+        lines.push(`- ${v.role ?? ''} at ${v.company?.name ?? ''}`)
+      }
+    }
+  }
+
+  return lines.join('\n')
+}
+
 export function buildLinkedInOptimizerMessage(params: {
   profileText: string
   specialization: string | null

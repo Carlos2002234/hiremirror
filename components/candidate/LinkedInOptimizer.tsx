@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Sparkles, Copy, Check, ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Zap, Search } from 'lucide-react'
+import { Loader2, Sparkles, Copy, Check, ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Zap, Search, Link2, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -46,8 +46,7 @@ function CopyButton({ text }: { text: string }) {
     setTimeout(() => setCopied(false), 2000)
   }
   return (
-    <button onClick={copy}
-      className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 transition-colors">
+    <button onClick={copy} className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 transition-colors">
       {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
       {copied ? 'Copiado' : 'Copiar'}
     </button>
@@ -107,14 +106,20 @@ function ImprovedBlock({ text, label = 'Versión mejorada' }: { text: string; la
 }
 
 export function LinkedInOptimizer({ specialization }: { specialization: string | null }) {
-  const [profileText, setProfileText] = useState('')
+  const [linkedinUrl, setLinkedinUrl] = useState('')
   const [targetRole, setTargetRole] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [showManual, setShowManual] = useState(false)
+  const [profileText, setProfileText] = useState('')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error' | 'no_key'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
+  const [scraped, setScraped] = useState(false)
 
   async function handleAnalyze() {
-    if (profileText.trim().length < 100) return
+    const hasUrl = linkedinUrl.trim().includes('linkedin.com/in/')
+    const hasText = profileText.trim().length >= 100
+    if (!hasUrl && !hasText) return
+
     setStatus('loading')
     setErrorMsg('')
     setAnalysis(null)
@@ -123,9 +128,19 @@ export function LinkedInOptimizer({ specialization }: { specialization: string |
       const res = await fetch('/api/candidate/linkedin-analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileText, targetRole }),
+        body: JSON.stringify({
+          linkedinUrl: hasUrl ? linkedinUrl.trim() : undefined,
+          profileText: !hasUrl && hasText ? profileText : undefined,
+          targetRole,
+        }),
       })
       const body = await res.json()
+
+      if (body.error === 'PROXYCURL_NOT_CONFIGURED') {
+        setStatus('no_key')
+        setShowManual(true)
+        return
+      }
 
       if (!res.ok) {
         setErrorMsg(body.detail ?? body.error ?? 'Error inesperado')
@@ -134,6 +149,7 @@ export function LinkedInOptimizer({ specialization }: { specialization: string |
       }
 
       setAnalysis(body.analysis as Analysis)
+      setScraped(body.scraped === true)
       setStatus('done')
     } catch {
       setErrorMsg('Error de red. Verifica tu conexión.')
@@ -141,31 +157,90 @@ export function LinkedInOptimizer({ specialization }: { specialization: string |
     }
   }
 
-  const overallColor = analysis ? (analysis.overall_score >= 70 ? '#10b981' : analysis.overall_score >= 45 ? '#f59e0b' : '#ef4444') : '#64748b'
+  const canSubmit = linkedinUrl.trim().includes('linkedin.com/in/') || profileText.trim().length >= 100
+  const overallColor = analysis
+    ? analysis.overall_score >= 70 ? '#10b981' : analysis.overall_score >= 45 ? '#f59e0b' : '#ef4444'
+    : '#64748b'
 
   return (
     <div className="space-y-6">
       {/* Input card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Pega el contenido de tu perfil de LinkedIn</CardTitle>
-          <p className="text-xs text-surface-500 mt-1">
-            Ve a tu perfil de LinkedIn → selecciona todo el texto (Ctrl+A) → cópialo → pégalo aquí.
-            Incluye headline, resumen, experiencia y habilidades.
-          </p>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-brand-400" />
+            Analiza tu perfil de LinkedIn
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <textarea
-            value={profileText}
-            onChange={e => setProfileText(e.target.value)}
-            placeholder="Pega aquí todo el texto de tu perfil de LinkedIn..."
-            rows={10}
-            className="w-full resize-none rounded-lg border border-surface-700 bg-surface-800 px-4 py-3 text-sm text-surface-100 placeholder:text-surface-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
+          {/* URL input — primary mode */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-surface-300">URL de tu perfil</label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={linkedinUrl}
+                onChange={e => setLinkedinUrl(e.target.value)}
+                placeholder="https://linkedin.com/in/tu-usuario"
+                className="flex-1 rounded-lg border border-surface-700 bg-surface-800 px-3 py-2 text-sm text-surface-100 placeholder:text-surface-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <p className="text-xs text-surface-600">
+              Tu perfil debe ser público para que la IA pueda leerlo.
+            </p>
+          </div>
 
-          <div className="flex flex-col gap-2">
+          {/* No Proxycurl key banner */}
+          {status === 'no_key' && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-2">
+              <p className="text-sm font-medium text-amber-400">Scraping automático no configurado</p>
+              <p className="text-xs text-surface-400">
+                Para usar el análisis automático por URL, agrega{' '}
+                <code className="bg-surface-700 px-1 py-0.5 rounded text-xs">PROXYCURL_API_KEY</code>{' '}
+                en las variables de entorno de Vercel. Puedes obtener una key gratuita en{' '}
+                <span className="text-brand-400">nubela.co/proxycurl</span>.
+              </p>
+              <p className="text-sm text-surface-300 mt-2">
+                Por ahora, pega el texto de tu perfil manualmente:
+              </p>
+            </div>
+          )}
+
+          {/* Manual paste — shown when no key or user requests it */}
+          {(showManual || status === 'no_key') && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-surface-300">
+                O pega el texto de tu perfil
+                <span className="ml-2 text-xs text-surface-500 font-normal">
+                  (LinkedIn → selecciona todo → Ctrl+C → pega aquí)
+                </span>
+              </label>
+              <textarea
+                value={profileText}
+                onChange={e => setProfileText(e.target.value)}
+                placeholder="Pega aquí todo el texto de tu perfil de LinkedIn..."
+                rows={8}
+                className="w-full resize-none rounded-lg border border-surface-700 bg-surface-800 px-4 py-3 text-sm text-surface-100 placeholder:text-surface-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+              <p className="text-xs text-surface-600">{profileText.length} caracteres</p>
+            </div>
+          )}
+
+          {/* Toggle manual paste */}
+          {!showManual && status !== 'no_key' && (
+            <button
+              onClick={() => setShowManual(true)}
+              className="flex items-center gap-1 text-xs text-surface-500 hover:text-surface-300 transition-colors"
+            >
+              <ChevronRight className="h-3 w-3" />
+              Pegar texto manualmente en su lugar
+            </button>
+          )}
+
+          {/* Target role */}
+          <div className="space-y-1.5">
             <label className="text-sm font-medium text-surface-300">
-              Rol objetivo (opcional)
+              Rol objetivo <span className="font-normal text-surface-500">(opcional)</span>
             </label>
             <input
               type="text"
@@ -176,21 +251,16 @@ export function LinkedInOptimizer({ specialization }: { specialization: string |
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-surface-600">{profileText.length} caracteres</span>
-            <Button
-              onClick={handleAnalyze}
-              disabled={status === 'loading' || profileText.trim().length < 100}
-              className="gap-2"
-            >
+          <div className="flex items-center justify-end gap-3">
+            {status === 'loading' && (
+              <p className="text-xs text-surface-500">Esto puede tardar 30-50s…</p>
+            )}
+            <Button onClick={handleAnalyze} disabled={status === 'loading' || !canSubmit} className="gap-2">
               {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {status === 'loading' ? 'Analizando...' : 'Analizar perfil'}
             </Button>
           </div>
 
-          {status === 'loading' && (
-            <p className="text-xs text-surface-500">Esto puede tardar 20-40 segundos. La IA está revisando cada sección de tu perfil.</p>
-          )}
           {status === 'error' && errorMsg && (
             <p className="text-sm text-danger">{errorMsg}</p>
           )}
@@ -218,7 +288,14 @@ export function LinkedInOptimizer({ specialization }: { specialization: string |
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-surface-50 mb-1">Score de tu perfil LinkedIn</h2>
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="font-semibold text-surface-50">Score de tu perfil LinkedIn</h2>
+                {scraped && (
+                  <span className="text-xs bg-success/10 text-success border border-success/20 rounded px-1.5 py-0.5">
+                    Analizado automáticamente
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-surface-300 leading-relaxed">{analysis.narrative_summary}</p>
             </div>
           </div>

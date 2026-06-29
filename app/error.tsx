@@ -25,7 +25,9 @@ export default function Error({
         Ocurrió un error inesperado. Intenta de nuevo o contacta soporte si el problema persiste.
       </p>
       {error.digest && (
-        <p className="mt-2 text-xs text-surface-700 font-mono">{error.digest}</p>
+        <p className="mt-4 rounded bg-surface-800 border border-surface-600 px-3 py-2 text-xs text-surface-200 font-mono break-all">
+          digest: {error.digest}
+        </p>
       )}
       <div className="mt-8 flex gap-3">
         {unstable_retry && <Button onClick={unstable_retry}>Intentar de nuevo</Button>}

@@ -20,7 +20,7 @@ export async function POST() {
   // Get candidate profile
   const { data: profile } = await supabase
     .from('candidate_profiles')
-    .select('id, full_name, headline, years_of_experience, specialization')
+    .select('id, full_name, headline, years_experience, primary_specialization')
     .eq('user_id', user.id)
     .single()
 
@@ -28,7 +28,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 404 })
   }
 
-  const candidateId = (profile as { id: string; full_name: string | null; headline: string | null; years_of_experience: number | null; specialization: string | null }).id
+  const candidateId = (profile as { id: string; full_name: string | null; headline: string | null; years_experience: number | null; primary_specialization: string | null }).id
 
   // Get CV source path
   const { data: cvSourceRaw } = await supabase
@@ -69,8 +69,8 @@ export async function POST() {
     id: string
     full_name: string | null
     headline: string | null
-    years_of_experience: number | null
-    specialization: string | null
+    years_experience: number | null
+    primary_specialization: string | null
   }
 
   let rawText: string
@@ -97,8 +97,8 @@ export async function POST() {
               text: buildProfilerUserMessage({
                 fullName: typedProfile.full_name ?? 'Unknown',
                 headline: typedProfile.headline,
-                yearsOfExperience: typedProfile.years_of_experience,
-                specialization: typedProfile.specialization,
+                yearsOfExperience: typedProfile.years_experience,
+                specialization: typedProfile.primary_specialization,
               }),
             },
           ],
